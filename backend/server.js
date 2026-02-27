@@ -12,20 +12,31 @@ const healthRoutes = require("./routes/healthRoutes");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const normalizeOrigin = (value = "") => value.trim().replace(/\/$/, "");
 const FRONTEND_ORIGINS = (process.env.FRONTEND_ORIGIN || "http://localhost:5173")
   .split(",")
-  .map((origin) => origin.trim())
+  .map((origin) => normalizeOrigin(origin))
   .filter(Boolean);
+
+const isAllowedOrigin = (origin = "") => {
+  const normalized = normalizeOrigin(origin);
+  if (!normalized) return true;
+  if (FRONTEND_ORIGINS.includes(normalized)) return true;
+  if (/^https:\/\/.*\.vercel\.app$/i.test(normalized)) return true;
+  if (/^http:\/\/localhost:\d+$/i.test(normalized)) return true;
+  return false;
+};
 
 app.use(
   cors({
     origin(origin, callback) {
-      if (!origin || FRONTEND_ORIGINS.includes(origin)) {
+      if (isAllowedOrigin(origin)) {
         return callback(null, true);
       }
-      return callback(new Error(`Origin ${origin} not allowed by CORS`));
+      return callback(null, false);
     },
     credentials: true,
+    optionsSuccessStatus: 200,
   })
 );
 app.use(express.json({ limit: "10mb" }));
