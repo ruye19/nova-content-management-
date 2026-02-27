@@ -6,6 +6,7 @@ const {
   listUsers,
   getActivity,
   removeUser,
+  updateUserRole,
 } = require("../controllers/adminController");
 
 const router = express.Router();
@@ -15,6 +16,7 @@ router.use(verifyToken, isAdmin);
 router.get("/stats", getStats);
 router.get("/users", listUsers);
 router.get("/activity/:id", getActivity);
+router.put("/users/:id/role", updateUserRole);
 router.delete("/users/:id", removeUser);
 
 module.exports = router;

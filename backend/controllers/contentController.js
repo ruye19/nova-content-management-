@@ -2,11 +2,12 @@ const pool = require("../config/db");
 const { slugify, ensureUniqueSlug } = require("../utils/slugify");
 
 const isOwnerOrAdmin = (user, content) => user.role === "admin" || content.authorId === user.id;
+const allowedTypes = new Set(["page", "post", "banner"]);
 
 async function listContents(req, res) {
   try {
     let query =
-      "SELECT c.id, c.title, c.slug, c.body, c.status, c.authorId, c.createdAt, u.username AS authorName FROM Contents c LEFT JOIN Users u ON c.authorId = u.id";
+      "SELECT c.id, c.title, c.slug, c.type, c.body, c.status, c.authorId, c.createdAt, u.username AS authorName FROM Contents c LEFT JOIN Users u ON c.authorId = u.id";
     const params = [];
     if (req.user.role !== "admin") {
       query += " WHERE c.authorId = ?";
@@ -39,17 +40,20 @@ async function getContent(req, res) {
 }
 
 async function createContent(req, res) {
-  const { title, body = "", status = "draft" } = req.body;
+  const { title, body = "", status = "draft", type = "post" } = req.body;
   if (!title) {
     return res.status(400).json({ error: "Title is required" });
+  }
+  if (!allowedTypes.has(type)) {
+    return res.status(400).json({ error: "Invalid content type" });
   }
 
   try {
     const baseSlug = slugify(title);
     const uniqueSlug = await ensureUniqueSlug(pool, baseSlug);
     const [result] = await pool.execute(
-      "INSERT INTO Contents (title, slug, body, status, authorId) VALUES (?, ?, ?, ?, ?)",
-      [title, uniqueSlug, body, status, req.user.id]
+      "INSERT INTO Contents (title, slug, type, body, status, authorId) VALUES (?, ?, ?, ?, ?, ?)",
+      [title, uniqueSlug, type, body, status, req.user.id]
     );
 
     const [rows] = await pool.execute("SELECT * FROM Contents WHERE id = ?", [result.insertId]);
@@ -61,7 +65,7 @@ async function createContent(req, res) {
 }
 
 async function updateContent(req, res) {
-  const { title, body, status, slug } = req.body;
+  const { title, body, status, slug, type } = req.body;
   try {
     const [rows] = await pool.execute("SELECT * FROM Contents WHERE id = ?", [req.params.id]);
     if (!rows.length) {
@@ -75,11 +79,15 @@ async function updateContent(req, res) {
     const nextTitle = title ?? content.title;
     const nextBody = body ?? content.body;
     const nextStatus = status ?? content.status;
+    const nextType = type ?? content.type;
+    if (!allowedTypes.has(nextType)) {
+      return res.status(400).json({ error: "Invalid content type" });
+    }
     const nextSlug = slug ? await ensureUniqueSlug(pool, slugify(slug), content.id) : content.slug;
 
     await pool.execute(
-      "UPDATE Contents SET title = ?, slug = ?, body = ?, status = ? WHERE id = ?",
-      [nextTitle, nextSlug, nextBody, nextStatus, content.id]
+      "UPDATE Contents SET title = ?, slug = ?, type = ?, body = ?, status = ? WHERE id = ?",
+      [nextTitle, nextSlug, nextType, nextBody, nextStatus, content.id]
     );
 
     const [updated] = await pool.execute("SELECT * FROM Contents WHERE id = ?", [content.id]);

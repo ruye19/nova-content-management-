@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { FiTrash2, FiUpload } from "react-icons/fi";
+import { FiDownload, FiFile, FiTrash2, FiUpload } from "react-icons/fi";
 import { useApi } from "../hooks/useApi";
 import { useAuth } from "../context/AuthContext";
 
@@ -63,11 +63,18 @@ function MediaLibrary() {
           <h1 className="text-3xl font-semibold text-brand.ink">Media library</h1>
           <p className="text-sm text-slate-500">Store hero shots, brand imagery, and marketing art.</p>
         </div>
-        <label className="flex cursor-pointer items-center gap-2 rounded-2xl bg-brand.highlight px-5 py-3 text-sm font-semibold text-slate-900">
-          <FiUpload />
-          {uploading ? "Uploading..." : "Upload"}
-          <input type="file" className="hidden" onChange={handleUpload} accept="image/*,video/*" />
-        </label>
+        {["admin", "editor"].includes(user?.role) && (
+          <label className="flex cursor-pointer items-center gap-2 rounded-2xl bg-brand.highlight px-5 py-3 text-sm font-semibold text-slate-900">
+            <FiUpload />
+            {uploading ? "Uploading..." : "Upload"}
+            <input
+              type="file"
+              className="hidden"
+              onChange={handleUpload}
+              accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip,.rar"
+            />
+          </label>
+        )}
       </header>
 
       {error && <p className="rounded-2xl bg-rose-50 px-4 py-3 text-sm text-rose-600">{error}</p>}
@@ -79,6 +86,7 @@ function MediaLibrary() {
           {items.map((item) => {
             const dataUrl = `data:${item.type};base64,${item.base64Data}`;
             const isVideo = item.type?.startsWith("video/");
+            const isImage = item.type?.startsWith("image/");
             return (
               <div key={item.id} className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-glass">
                 {isVideo ? (
@@ -89,23 +97,40 @@ function MediaLibrary() {
                     muted
                     playsInline
                   />
-                ) : (
+                ) : isImage ? (
                   <img src={dataUrl} alt={item.name} className="h-48 w-full object-cover" />
+                ) : (
+                  <div className="flex h-48 w-full flex-col items-center justify-center gap-3 bg-slate-100 text-slate-500">
+                    <FiFile className="text-4xl" />
+                    <p className="px-4 text-center text-xs font-semibold uppercase tracking-wide">
+                      {item.type || "file"}
+                    </p>
+                  </div>
                 )}
               <div className="flex items-center justify-between px-4 py-4 text-sm">
                 <div>
                   <p className="font-semibold text-brand.ink">{item.name}</p>
                   <p className="text-xs text-slate-400">{item.type}</p>
                 </div>
-                {user?.role === "admin" && (
-                  <button
-                    type="button"
-                    onClick={() => handleDelete(item)}
-                    className="rounded-full bg-rose-50 p-2 text-rose-500 hover:bg-rose-100"
+                <div className="flex items-center gap-2">
+                  <a
+                    href={dataUrl}
+                    download={item.name}
+                    className="rounded-full bg-slate-100 p-2 text-slate-600 hover:bg-slate-200"
+                    title="Download"
                   >
-                    <FiTrash2 />
-                  </button>
-                )}
+                    <FiDownload />
+                  </a>
+                  {user?.role === "admin" && (
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(item)}
+                      className="rounded-full bg-rose-50 p-2 text-rose-500 hover:bg-rose-100"
+                    >
+                      <FiTrash2 />
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
             );

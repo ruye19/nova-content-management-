@@ -12,7 +12,7 @@ function ContentEditor() {
   const navigate = useNavigate();
   const { content } = useApi();
   const editorRef = useRef(null);
-  const [form, setForm] = useState({ title: "", status: "draft" });
+  const [form, setForm] = useState({ title: "", status: "draft", type: "post" });
   const [body, setBody] = useState("");
   const [loading, setLoading] = useState(Boolean(id));
   const [saving, setSaving] = useState(false);
@@ -26,7 +26,7 @@ function ContentEditor() {
       setError(null);
       try {
         const existing = await content.get(id);
-        setForm({ title: existing.title, status: existing.status });
+        setForm({ title: existing.title, status: existing.status, type: existing.type || "post" });
         setBody(existing.body || "");
       } catch (err) {
         setError(err.message);
@@ -74,8 +74,13 @@ function ContentEditor() {
       const html = `<video controls style="width:100%" src="${dataUrl}"></video>`;
       quill.clipboard.dangerouslyPasteHTML(index, html, "user");
       quill.setSelection(index + 1);
-    } else {
+    } else if (item.type?.startsWith("image/")) {
       quill.insertEmbed(index, "image", dataUrl);
+      quill.setSelection(index + 1);
+    } else {
+      const safeName = (item.name || "file").replace(/"/g, "&quot;");
+      const html = `<a href="${dataUrl}" download="${safeName}" target="_blank" rel="noopener noreferrer">${safeName}</a>`;
+      quill.clipboard.dangerouslyPasteHTML(index, html, "user");
       quill.setSelection(index + 1);
     }
   };
@@ -124,6 +129,19 @@ function ContentEditor() {
           />
         </div>
         <div className="flex flex-col gap-4 md:flex-row">
+          <div className="flex-1">
+            <label className="text-sm font-semibold text-slate-600">Type</label>
+            <select
+              name="type"
+              value={form.type}
+              onChange={handleChange}
+              className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-brand.ink"
+            >
+              <option value="post">Post</option>
+              <option value="page">Page</option>
+              <option value="banner">Banner</option>
+            </select>
+          </div>
           <div className="flex-1">
             <label className="text-sm font-semibold text-slate-600">Status</label>
             <select

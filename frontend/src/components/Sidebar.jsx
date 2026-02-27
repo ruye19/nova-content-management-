@@ -4,13 +4,15 @@ import { useAuth } from "../context/AuthContext";
 
 const baseLinks = [
   { label: "Overview", to: "/", icon: FiHome },
-  { label: "New Draft", to: "/editor", icon: FiEdit3 },
   { label: "Media", to: "/media", icon: FiImage },
 ];
 
 function Sidebar() {
   const { user, logout } = useAuth();
   const links = [...baseLinks];
+  if (["admin", "editor"].includes(user?.role)) {
+    links.splice(1, 0, { label: "New Draft", to: "/editor", icon: FiEdit3 });
+  }
   if (user?.role === "admin") {
     links.push({ label: "Admin", to: "/admin", icon: FiUsers });
     links.push({ label: "Menus", to: "/menus", icon: FiUsers });

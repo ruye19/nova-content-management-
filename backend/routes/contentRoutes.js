@@ -1,5 +1,6 @@
 const express = require("express");
 const verifyToken = require("../middleware/verifyToken");
+const requireRole = require("../middleware/requireRole");
 const {
   listContents,
   getContent,
@@ -14,8 +15,8 @@ router.use(verifyToken);
 
 router.get("/", listContents);
 router.get("/:id", getContent);
-router.post("/", createContent);
-router.put("/:id", updateContent);
-router.delete("/:id", deleteContent);
+router.post("/", requireRole(["admin", "editor"]), createContent);
+router.put("/:id", requireRole(["admin", "editor"]), updateContent);
+router.delete("/:id", requireRole(["admin", "editor"]), deleteContent);
 
 module.exports = router;

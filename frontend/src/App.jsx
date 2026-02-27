@@ -18,9 +18,12 @@ function App() {
       <Route element={<ProtectedRoute />}>
         <Route element={<DashboardLayout />}>
           <Route index element={<Dashboard />} />
-          <Route path="editor" element={<ContentEditor />} />
-          <Route path="editor/:id" element={<ContentEditor />} />
           <Route path="media" element={<MediaLibrary />} />
+
+          <Route element={<ProtectedRoute allowedRoles={["admin", "editor"]} />}>
+            <Route path="editor" element={<ContentEditor />} />
+            <Route path="editor/:id" element={<ContentEditor />} />
+          </Route>
 
           <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
             <Route path="admin" element={<Admin />} />

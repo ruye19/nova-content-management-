@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS Users (
     username VARCHAR(255) NOT NULL,
     email VARCHAR(191) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
-    role ENUM('admin', 'user') DEFAULT 'user',
+    role ENUM('admin', 'editor', 'user') DEFAULT 'editor',
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS Contents (
     id INT AUTO_INCREMENT PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
     slug VARCHAR(191) NOT NULL UNIQUE,
+    type ENUM('page', 'post', 'banner') DEFAULT 'post',
     body LONGTEXT NOT NULL,
     status ENUM('draft', 'published') DEFAULT 'draft',
     authorId INT,

@@ -48,6 +48,7 @@ export function useApi() {
         stats: () => request("/admin/stats"),
         users: () => request("/admin/users"),
         activity: (id) => request(`/admin/activity/${id}`),
+        updateRole: (id, role) => request(`/admin/users/${id}/role`, { method: "PUT", data: { role } }),
       },
     }),
     [request]

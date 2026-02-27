@@ -16,8 +16,7 @@ This project is a small Content Management System built with **React**, **Node/E
   - `Admin` page (admin-only) shows system stats and user activity.
   - `Menus` page (admin-only) manages navigation menus (header/footer/etc.).
 - **Pages / posts / banners / menus**
-  - **Pages & posts**: handled via the `Contents` table and the `Dashboard` + `Content editor` screens.
-  - **Banners**: can be modeled as content entries that embed images/videos from the media library (via the rich editor and “Insert media”).
+  - **Pages, posts, banners**: handled as explicit content types (`type` field) in `Contents`, managed in `Dashboard` + `Content editor`.
   - **Menus**: dedicated Menus feature:
     - Backend: `Menus` table (name, location, items JSON) and `/api/menus` admin-only CRUD.
     - Frontend: `Menus` page under the dashboard (admin-only), where you can add/edit/delete menus and their items.
@@ -29,13 +28,19 @@ This project is a small Content Management System built with **React**, **Node/E
   - `RichEditor` uses React Quill with headings, formatting, lists, alignment, links, and images.
   - The editor can embed media from the library directly into the content body.
 - **Media library**
-  - Upload images and videos (stored in MySQL as LONGBLOB), preview them, and (for admins) delete them.
-  - Media can be inserted into content from the editor.
+  - Upload images, videos, and files/documents (stored in MySQL as LONGBLOB), preview/download them, and (for admins) delete them.
+  - Media can be inserted into content from the editor:
+    - image -> embedded image
+    - video -> embedded video
+    - file/document -> inserted as downloadable link
 - **Role-based access**
-  - Users table stores a `role` (`admin` or `user`).
+  - Users table stores a `role` (`admin`, `editor`, `user`).
   - Backend middlewares:
     - `verifyToken` protects authenticated routes.
-    - `isAdmin` restricts admin routes (`/api/admin`, `/api/media` delete, `/api/menus`).
+    - `requireRole` + `isAdmin` enforce role-level access.
+    - `admin` can access `/api/admin`, manage users/roles, delete media, and manage menus.
+    - `editor` can create/update/delete content and upload media.
+    - `user` is reserved for limited access scenarios.
   - Frontend:
     - `AuthContext` stores the logged-in user and JWT.
     - `ProtectedRoute` guards authenticated routes and can require specific roles (e.g. admin).
@@ -52,7 +57,7 @@ This project is a small Content Management System built with **React**, **Node/E
 
 2. **Database setup**
    - Create a MySQL database (for example `mern_cms_db`).
-   - Update `backend/.env` with your MySQL credentials:
+  - Copy `backend/.env.example` to `backend/.env`, then update MySQL credentials:
      - `DB_HOST`, `DB_USER`, `DB_PASS`, `DB_NAME`, `JWT_SECRET`.
    - Run the schema:
      - Execute `backend/database/schema.sql` against your database (e.g. via MySQL client).
@@ -73,11 +78,12 @@ This project is a small Content Management System built with **React**, **Node/E
 
 ### Authentication & roles
 
-- **Register**: create a standard user account from the Signup screen.
+- **Register**: creates an `editor` account from the Signup screen.
 - **Login**: authenticate, receive a JWT, and access the dashboard.
 - **Admin**:
   - Use the seeded admin credentials to access:
     - `Admin` overview (users, stats, activity).
+    - User role management (`admin` / `editor` / `user`).
     - `Menus` management.
     - Media deletion actions.
 

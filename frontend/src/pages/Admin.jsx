@@ -9,6 +9,7 @@ function Admin() {
   const [selectedUser, setSelectedUser] = useState(null);
   const [activity, setActivity] = useState(null);
   const [loadingActivity, setLoadingActivity] = useState(false);
+  const [updatingRoleId, setUpdatingRoleId] = useState(null);
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -35,6 +36,22 @@ function Admin() {
       setError(err.message);
     } finally {
       setLoadingActivity(false);
+    }
+  };
+
+  const handleRoleChange = async (userId, role) => {
+    setUpdatingRoleId(userId);
+    setError(null);
+    try {
+      await admin.updateRole(userId, role);
+      setUsers((prev) => prev.map((user) => (user.id === userId ? { ...user, role } : user)));
+      if (selectedUser?.id === userId) {
+        setSelectedUser((prev) => ({ ...prev, role }));
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setUpdatingRoleId(null);
     }
   };
 
@@ -66,6 +83,7 @@ function Admin() {
                 <th className="px-6 py-3 text-left">Email</th>
                 <th className="px-6 py-3">Posts</th>
                 <th className="px-6 py-3">Media</th>
+                <th className="px-6 py-3">Role</th>
                 <th className="px-6 py-3 text-right">Inspect</th>
               </tr>
             </thead>
@@ -76,6 +94,18 @@ function Admin() {
                   <td className="px-6 py-4 text-slate-500">{user.email}</td>
                   <td className="px-6 py-4 text-center">{user.postsCount}</td>
                   <td className="px-6 py-4 text-center">{user.mediaCount ?? "–"}</td>
+                  <td className="px-6 py-4 text-center">
+                    <select
+                      value={user.role}
+                      onChange={(e) => handleRoleChange(user.id, e.target.value)}
+                      disabled={updatingRoleId === user.id}
+                      className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-slate-700"
+                    >
+                      <option value="admin">admin</option>
+                      <option value="editor">editor</option>
+                      <option value="user">user</option>
+                    </select>
+                  </td>
                   <td className="px-6 py-4 text-right">
                     <button
                       type="button"
@@ -89,7 +119,7 @@ function Admin() {
               ))}
               {!users.length && (
                 <tr>
-                  <td colSpan="5" className="px-6 py-6 text-center text-slate-500">
+                  <td colSpan="6" className="px-6 py-6 text-center text-slate-500">
                     No users yet.
                   </td>
                 </tr>

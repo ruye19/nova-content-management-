@@ -1,5 +1,7 @@
 const pool = require("../config/db");
 
+const allowedRoles = new Set(["admin", "editor", "user"]);
+
 async function getStats(req, res) {
   try {
     const [[userCount]] = await pool.execute("SELECT COUNT(*) AS totalUsers FROM Users");
@@ -100,4 +102,30 @@ async function removeUser(req, res) {
   }
 }
 
-module.exports = { getStats, listUsers, getActivity, removeUser };
+async function updateUserRole(req, res) {
+  const targetId = Number(req.params.id);
+  const { role } = req.body;
+
+  if (!allowedRoles.has(role)) {
+    return res.status(400).json({ error: "Invalid role" });
+  }
+
+  try {
+    const [[target]] = await pool.execute("SELECT id, role FROM Users WHERE id = ?", [targetId]);
+    if (!target) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    if (req.user.id === targetId && role !== "admin") {
+      return res.status(400).json({ error: "You cannot remove your own admin role" });
+    }
+
+    await pool.execute("UPDATE Users SET role = ? WHERE id = ?", [role, targetId]);
+    return res.json({ message: "Role updated" });
+  } catch (error) {
+    console.error("updateUserRole", error);
+    return res.status(500).json({ error: "Failed to update role" });
+  }
+}
+
+module.exports = { getStats, listUsers, getActivity, removeUser, updateUserRole };

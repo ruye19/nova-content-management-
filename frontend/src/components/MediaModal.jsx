@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { FiUpload, FiX } from "react-icons/fi";
+import { FiFile, FiUpload, FiX } from "react-icons/fi";
 import { useApi } from "../hooks/useApi";
 
 function MediaModal({ open, onClose, onSelect }) {
@@ -62,10 +62,15 @@ function MediaModal({ open, onClose, onSelect }) {
         <label className="mb-2 flex w-full cursor-pointer items-center justify-center gap-3 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-5 text-sm text-slate-500 hover:border-brand.highlight">
           <FiUpload className="text-lg" />
           {uploading ? "Uploading..." : "Click to upload"}
-          <input type="file" className="hidden" onChange={handleUpload} accept="image/*,video/*" />
+          <input
+            type="file"
+            className="hidden"
+            onChange={handleUpload}
+            accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip,.rar"
+          />
         </label>
         <p className="mb-6 text-xs text-slate-400">
-          Supported: PNG, JPG, GIF, MP4, MOV (max 10 MB)
+          Supported: Images, videos, and documents/files (max 10 MB)
         </p>
         {error && <p className="mb-4 rounded-xl bg-rose-50 px-4 py-2 text-sm text-rose-600">{error}</p>}
         <div className="max-h-[50vh] overflow-y-auto">
@@ -76,6 +81,7 @@ function MediaModal({ open, onClose, onSelect }) {
               {items.map((item) => {
                 const dataUrl = `data:${item.type};base64,${item.base64Data}`;
                 const isVideo = item.type?.startsWith("video/");
+                const isImage = item.type?.startsWith("image/");
                 return (
                 <button
                   type="button"
@@ -94,8 +100,15 @@ function MediaModal({ open, onClose, onSelect }) {
                       muted
                       playsInline
                     />
-                  ) : (
+                  ) : isImage ? (
                     <img src={dataUrl} alt={item.name} className="h-40 w-full object-cover" />
+                  ) : (
+                    <div className="flex h-40 w-full flex-col items-center justify-center gap-3 bg-slate-100 text-slate-500">
+                      <FiFile className="text-4xl" />
+                      <p className="px-3 text-center text-xs font-semibold uppercase tracking-wide">
+                        {item.type || "file"}
+                      </p>
+                    </div>
                   )}
                   <div className="px-4 py-3 text-sm">
                     <p className="font-semibold text-slate-800">{item.name}</p>
