@@ -12,11 +12,19 @@ const healthRoutes = require("./routes/healthRoutes");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || "https://nova-content-management.onrender.com";
+const FRONTEND_ORIGINS = (process.env.FRONTEND_ORIGIN || "http://localhost:5173")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
 app.use(
   cors({
-    origin: FRONTEND_ORIGIN,
+    origin(origin, callback) {
+      if (!origin || FRONTEND_ORIGINS.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error(`Origin ${origin} not allowed by CORS`));
+    },
     credentials: true,
   })
 );
@@ -45,5 +53,5 @@ app.use((err, req, res, next) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`API ready on https://nova-content-management.onrender.com http://localhost:${PORT}`);
+  console.log(`API ready on http://localhost:${PORT}`);
 });

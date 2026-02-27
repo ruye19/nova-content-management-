@@ -1,4 +1,6 @@
-const rawBase = import.meta.env.VITE_API_URL?.replace(/\/$/, "") || "http://localhost:5000";
+const rawBase =
+  import.meta.env.VITE_API_URL?.replace(/\/$/, "") ||
+  (import.meta.env.DEV ? "http://localhost:5000" : "https://nova-content-management.onrender.com");
 export const API_URL = `${rawBase}/api`;
 
 export async function httpRequest(path, { method = "GET", data, token } = {}) {
